@@ -2,13 +2,12 @@ const cron = require("node-cron");
 
 module.exports = {
   name: "acc",
-  aliases: ["accept"],
-  usePrefix: false,
-  usage: "acc [check <UID>]",
+  aliases: [],
+  usage: "acc [approve <UID>]",
   description: "Accept or check pending friend requests.",
-  version: "1.0.1",
-  admin: true,
+  version: "1.0.0",
   cooldown: 5,
+  admin: true,
 
   async execute({ api, event, args }) {
     const { threadID, messageID } = event;
@@ -46,31 +45,31 @@ module.exports = {
       return { success, failed };
     };
 
-    const [subCommand, uid] = args;
-
-    if (subCommand === "check") {
-      if (!uid || isNaN(uid)) {
-        return send("❌ Invalid syntax. Use: acc check <UID>");
+    if (args[0] === "approve") {
+      if (args.length !== 2 || isNaN(args[1])) {
+        return send("❌ Invalid syntax. Use: acc approve <UID>");
       }
 
-      const { success, failed } = await handleApprove(uid);
+      const { success, failed } = await handleApprove(args[1]);
 
       if (success.length > 0) send(`✅ Approved friend request for UID: ${success.join(", ")}`);
       if (failed.length > 0) send(`❌ Failed to approve friend request for UID: ${failed.join(", ")}`);
       return;
     }
 
-    // Manual check if no "check" subcommand
     await checkFriendRequests(api, threadID, messageID);
-  }
+  },
 };
 
-// Scheduled automatic check every hour
+// Scheduled check every hour (adjust as needed)
 cron.schedule("0 * * * *", async () => {
-  const api = global.api; // depends on bot architecture
-  const threadID = "YOUR_THREAD_ID"; // change this to your actual group ID
+  const api = global.api;
+  const threadID = "YOUR_THREAD_ID"; // Replace with actual thread ID
   const messageID = null;
-  await checkFriendRequests(api, threadID, messageID);
+
+  if (api) {
+    await checkFriendRequests(api, threadID, messageID);
+  }
 });
 
 async function checkFriendRequests(api, threadID, messageID) {
@@ -88,9 +87,7 @@ async function checkFriendRequests(api, threadID, messageID) {
     const res = await api.httpPost("https://www.facebook.com/api/graphql/", form);
     const requests = JSON.parse(res).data.viewer.friending_possibilities.edges;
 
-    if (!requests.length) {
-      return send("✅ No pending friend requests found.");
-    }
+    if (!requests.length) return send("✅ No pending friend requests found.");
 
     let msg = "📥 Pending Friend Requests:\n";
     let count = 0;
@@ -98,13 +95,12 @@ async function checkFriendRequests(api, threadID, messageID) {
     for (const user of requests) {
       count++;
       const date = new Date(user.time * 1000);
-      const formattedTime = date.toLocaleString("en-PH", { timeZone: "Asia/Manila" });
-
-      msg += `\n${count}. Name: ${user.node.name}\nID: ${user.node.id}\nUrl: ${user.node.url.replace("www.facebook", "fb")}\nTime: ${formattedTime}\n`;
+      msg += `\n${count}. Name: ${user.node.name}\nID: ${user.node.id}\nUrl: ${user.node.url.replace("www.facebook", "fb")}\nTime: ${date.toLocaleString()}\n`;
     }
 
-    msg += `\nTo approve a request, use: acc check <UID>`;
+    msg += `\nTo approve a request, use: acc approve <UID>`;
     send(msg);
+
   } catch (error) {
     console.error("Friend check error:", error);
     send("❌ Error fetching friend request list.");
