@@ -6,10 +6,8 @@ aliases: ["acc"],
 usage: "acc [check <UID>]",
 description: "Accept or check pending friend requests.",
 version: "1.0.1",
-cooldowns: 5,
-hasPrefix: true,
-role: 2,
-credits: "Developer",
+cooldown: 5,
+hasPrefix: false,
 admin: true,
 
 execute: async ({ api, event, args }) => {
