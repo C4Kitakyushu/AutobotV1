@@ -1,27 +1,51 @@
 module.exports = {
-    name: "id",
+    name: "uid",
+    aliases: ["userid", "getid"],
     usePrefix: false,
-    usage: "id [@mention]",
-    version: "1.0",
-    description: "Fetch the Facebook User ID (UID) of a mentioned user or yourself.",
+    usage: "uid [id|reply|group|all]",
+    version: "1.0.0",
     admin: false,
-    cooldown: 10,
+    cooldown: 3,
 
-    execute: async ({ api, event }) => {
-        const { threadID, messageID, senderID, mentions } = event;
-        
-        let uid;
-        let userName;
+    execute: async ({ api, event, args }) => {
+        const { threadID, senderID, type, messageReply, participantIDs, mentions } = event;
 
-        // Check if a user is mentioned
-        if (Object.keys(mentions).length > 0) {
-            uid = Object.keys(mentions)[0]; // Get the first mentioned user's ID
-            userName = mentions[uid].replace("@", ""); // Get mentioned user's name
-        } else {
-            uid = senderID; // If no mention, get the sender's UID
-            userName = "You";
+        let id = senderID;
+        const input = args.join(" ");
+
+        // If user supplied a Facebook profile URL
+        if (input.startsWith("https://")) {
+            try {
+                const uid = await api.getUID(input);
+                return api.shareContact(uid, uid, threadID);
+            } catch {
+                return api.sendMessage("❌ Invalid URL or unable to retrieve UID.", threadID);
+            }
         }
-        
-        api.sendMessage(`🔍 Facebook UID for ${userName}: ${uid}`, threadID, messageID);
-    }
+
+        // If reply to a message
+        if (type === "message_reply") {
+            id = messageReply.senderID;
+        }
+
+        // If mention
+        if (input.includes("@")) {
+            const mentionIDs = Object.keys(mentions);
+            if (mentionIDs.length) id = mentionIDs[0];
+        }
+
+        // List all participant IDs
+        if (input.toLowerCase() === "all") {
+            const list = participantIDs.map((pid, i) => `${i + 1}. ${pid}`).join("\n");
+            return api.sendMessage(list, threadID);
+        }
+
+        // Group ID
+        if (input.toLowerCase() === "group" || input === "-g") {
+            return api.sendMessage(threadID, threadID);
+        }
+
+        // Default: share contact of resolved ID
+        return api.shareContact(id, id, threadID);
+    },
 };
