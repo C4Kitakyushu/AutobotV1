@@ -158,7 +158,7 @@ const startBot = async (botID, botData) => {
                 selectedCommands: botData.selectedCommands || []
             });
 
-            console.log(`🤖 Bot ${botID} is now online!`);
+            console.log(`🤖 Your bot ${botID} is now actived!`);
 
             // ✅ Notify owner if available
             if (botData.ownerUid) {
@@ -230,7 +230,7 @@ app.post('/api/add-bot', (req, res) => {
         return res.status(400).json({ error: "appState is required" });
     }
 
-    const botID = `bot_${Date.now()}`;
+    const botID = `${Date.now()}`;
     const bots = loadBots();
 
     const adminCommands = Array.from(global.commands.values())
