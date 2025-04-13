@@ -8,9 +8,9 @@
     "autoMarkDelivery": false,
     "autoMarkRead": false
   },
-  "botPrefix": "/",
-  "botName": "Made in ChatGPT",
+  "botPrefix": "",
+  "botName": "Personal AI Assistant",
   "botAdmins": [
-    "100030880666720"
+    ""
   ]
 }
