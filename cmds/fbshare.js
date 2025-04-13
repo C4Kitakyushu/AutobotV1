@@ -14,7 +14,7 @@ module.exports = {
   description: "Boost Facebook post shares using a specified server.",
   version: "1.0.1",
   admin: true,
-  cooldown: 5,
+  cooldown: 15,
 
   async execute({ api, event, args }) {
     const { threadID, messageID } = event;
