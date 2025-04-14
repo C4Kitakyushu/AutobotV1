@@ -5,130 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Autobot</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="https://i.imgur.com/n4syXdY.jpeg" type="image/png">
-
-  <style>
-    :root {
-      --bg-color: #f5f5f5;
-      --text-color: #333;
-      --container-bg: white;
-      --btn-bg: #4a90e2;
-      --btn-hover: #357ab8;
-      --shadow: rgba(0,0,0,0.1);
-    }
-
-    body.dark {
-      --bg-color: #121212;
-      --text-color: #f1f1f1;
-      --container-bg: #1e1e1e;
-      --btn-bg: #3a6eea;
-      --btn-hover: #2f5bd3;
-      --shadow: rgba(0,0,0,0.5);
-    }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 40px 0;
-      background: var(--bg-color);
-      color: var(--text-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .container {
-      position: relative;
-      background: var(--container-bg);
-      padding: 2rem;
-      border-radius: 20px;
-      box-shadow: 0 8px 20px var(--shadow);
-      width: 90%;
-      max-width: 500px;
-      text-align: center;
-      margin-bottom: 20px;
-      transition: background 0.3s;
-    }
-
-    .toggle-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      font-size: 1.4rem;
-      cursor: pointer;
-      color: var(--text-color);
-    }
-
-    textarea, input {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-family: monospace;
-      background: transparent;
-      color: var(--text-color);
-    }
-
-    button {
-      width: 106%;
-      padding: 0.75rem;
-      background: var(--btn-bg);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background: var(--btn-hover);
-    }
-
-    #loading {
-      display: none;
-      margin-top: 1rem;
-      color: var(--btn-bg);
-      font-weight: bold;
-    }
-
-    #result {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
-
-    .footer-container {
-      background: var(--container-bg);
-      padding: 1.5rem;
-      border-radius: 20px;
-      box-shadow: 0 6px 15px var(--shadow);
-      width: 90%;
-      max-width: 500px;
-      margin-bottom: 30px;
-      transition: background 0.3s;
-    }
-
-    .footer-container h2 {
-      color: green;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    .footer-container h3 {
-      color: #2d8cff;
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .user-count {
-      margin-top: 1.5rem;
-      font-weight: bold;
-      color: var(--btn-bg);
-    }
-  </style>
 </head>
 <body>
   <div class="container">
@@ -142,7 +20,7 @@
     <label for="ownerUid">Owner UID:</label>
     <input type="text" id="ownerUid" placeholder="Enter owner UID">
 
-    <button id="addBotBtn" onclick="addBot()">Submit </button>
+    <button id="addBotBtn" onclick="addBot()">Submit</button>
     <div id="loading">Loading...</div>
     <div id="result"></div>
   </div>
@@ -153,90 +31,14 @@
 
     <h3>Terms of Service</h3>
     <p><strong>Intended Use:</strong> This chatbot service is intended for managing automated bot commands in group chats. Users must not use this for spam, abuse, or any malicious intent.</p>
-
     <p><strong>Command Execution:</strong> All selected commands are automatically applied upon bot registration. Users must ensure the commands are used responsibly.</p>
-
     <p><strong>Account Security:</strong> Your appState JSON contains sensitive access info. Do not share it publicly. We are not responsible for misuse caused by leaked credentials.</p>
 
     <h3>Privacy Policy</h3>
     <p><strong>Data Storage:</strong> We do not permanently store your appState or personal data. Data is used only to register the bot and is handled securely.</p>
-
     <p><strong>Third-party Access:</strong> No third parties are given access to your data. All bot operations are handled internally.</p>
   </div>
 
-  <script>
-    let defaultCommands = [];
-
-    async function fetchDefaultCommands() {
-      try {
-        const res = await fetch('/api/available-cmds');
-        const cmds = await res.json();
-        defaultCommands = cmds.filter(cmd => !cmd.admin).map(cmd => cmd.name);
-      } catch (error) {
-        console.error("Error fetching commands:", error);
-      }
-    }
-
-    async function fetchActiveUserCount() {
-      try {
-        const res = await fetch('/api/active-users');
-        const data = await res.json();
-        document.getElementById('userCount').innerText = `Active Users: ${data.count}`;
-      } catch {
-        console.warn('Could not fetch active user count.');
-      }
-    }
-
-    async function addBot() {
-      const resultDiv = document.getElementById('result');
-      const addBotBtn = document.getElementById('addBotBtn');
-      const loadingDiv = document.getElementById('loading');
-
-      resultDiv.innerText = '';
-      const appStateText = document.getElementById('appState').value.trim();
-      const ownerUid = document.getElementById('ownerUid').value.trim();
-
-      if (!appStateText) return alert('Please enter your appState JSON!');
-      let appState;
-      try {
-        appState = JSON.parse(appStateText);
-      } catch {
-        return alert('Invalid appState JSON!');
-      }
-
-      addBotBtn.disabled = true;
-      loadingDiv.style.display = 'block';
-
-      try {
-        const response = await fetch('/api/add-bot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ appState, ownerUid, selectedCommands: defaultCommands })
-        });
-
-        const result = await response.json();
-        resultDiv.innerText = result.success
-          ? `Activted successfully! Bot ID: ${result.botID} ✅`
-          : `❌ Failed: ${result.error}`;
-
-        if (result.success) fetchActiveUserCount();
-      } catch (error) {
-        resultDiv.innerText = `❌ Error: ${error.message}`;
-      } finally {
-        addBotBtn.disabled = false;
-        loadingDiv.style.display = 'none';
-      }
-    }
-
-    function toggleTheme() {
-      document.body.classList.toggle('dark');
-      const icon = document.getElementById('themeIcon');
-      icon.classList.toggle('fa-moon');
-      icon.classList.toggle('fa-sun');
-    }
-
-    fetchDefaultCommands();
-    fetchActiveUserCount();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
