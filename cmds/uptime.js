@@ -1,39 +1,53 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-
-const startTime = Date.now(); // Save this at the top level for global uptime
+const os = require("os");
+const pidusage = require("pidusage");
 
 module.exports = {
-    name: "uptime",
-    usePrefix: false,
-    usage: "uptime",
-    description: "Get the bot uptime image",
-    version: "1.1",
-    admin: false,
-    cooldown: 5,
+  name: "uptime",
+  version: "1.0.2",
+  usePrefix: false,
+  usage: "uptime",
+  description: "Displays bot uptime and system information.",
+  admin: false,
+  cooldown: 5,
 
-    async execute({ api, event }) {
-        try {
-            // Calculate uptime
-            const uptimeMs = Date.now() - startTime;
-            const hours = Math.floor(uptimeMs / (1000 * 60 * 60));
-            const minutes = Math.floor((uptimeMs / (1000 * 60)) % 60);
-            const seconds = Math.floor((uptimeMs / 1000) % 60);
+  execute: async ({ api, event }) => {
+    const { threadID, messageID } = event;
 
-            const imgUrl = `https://kaiz-apis.gleeze.com/api/uptime?instag=brtbrtbrt15&ghub=Jhon-mark23&fb=Mark Martinez&hours=${hours}&minutes=${minutes}&seconds=${seconds}&botname=Fbot-V1.8`;
-            const filePath = path.join(__dirname, "cache", `uptime_${event.senderID}.png`);
+    const byte2mb = (bytes) => {
+      const units = ["Bytes", "KB", "MB", "GB", "TB"];
+      let l = 0,
+        n = parseInt(bytes, 10) || 0;
+      while (n >= 1024 && ++l) n = n / 1024;
+      return `${n.toFixed(n < 10 && l > 0 ? 1 : 0)} ${units[l]}`;
+    };
 
-            const res = await axios.get(imgUrl, { responseType: "arraybuffer" });
-            fs.writeFileSync(filePath, res.data);
+    const getUptime = () => {
+      const seconds = process.uptime();
+      const days = Math.floor(seconds / (3600 * 24));
+      const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${days} day(s), ${hours} hour(s), ${minutes} minute(s), ${secs} second(s)`;
+    };
 
-            api.sendMessage({
-                body: "Fbot-V1.8 uptime",
-                attachment: fs.createReadStream(filePath)
-            }, event.threadID, () => fs.unlinkSync(filePath));
-        } catch (error) {
-            console.error("Uptime error:", error);
-            api.sendMessage("Failed to fetch uptime image.", event.threadID, event.messageID);
-        }
+    try {
+      const usage = await pidusage(process.pid);
+      const ping = Date.now();
+
+      const info = `
+⏱ Bot Uptime: ${getUptime()}
+❖ CPU Usage: ${usage.cpu.toFixed(1)}%
+❖ RAM Usage: ${byte2mb(usage.memory)}
+❖ CPU Cores: ${os.cpus().length}
+❖ Ping: ${Date.now() - ping}ms
+❖ OS Platform: ${os.platform()}
+❖ CPU Architecture: ${os.arch()}
+      `.trim();
+
+      return api.sendMessage(info, threadID, messageID);
+    } catch (err) {
+      console.error("❌ Uptime command error:", err);
+      return api.sendMessage("❌ Failed to fetch uptime info.", threadID, messageID);
     }
+  },
 };
