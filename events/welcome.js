@@ -15,7 +15,7 @@ module.exports = {
 
                     const mentions = [
                         { tag: `@${userName}`, id: userID },
-                        { tag: "@BotCreator", id: "100030880666720" }
+                        { tag: "@BotCreator", id: "4" }
                     ];
 
                     const message = {
